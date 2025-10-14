@@ -13,9 +13,6 @@ except Exception:
 load_dotenv(".env")
 
 # ===== Config =====
-HOST = os.getenv("HOST", "127.0.0.1")
-PORT = int(os.getenv("PORT", "5001"))
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 SYSTEM_PROMPT  = os.getenv(
@@ -243,23 +240,19 @@ def summarize_old_memory(days_old:int=90, batch:int=200):
         temperature=0.2
     )
     summary = rsp.choices[0].message.content.strip()
-    # Write summary note with tag 'archive-summary'
     props = memory_properties(summary, source="system", tags=["archive-summary"])
     return notion_create_row(NOTION_MEMORY_DBID, props)
 
 # Run summarizer at startup + weekly
 def scheduler():
-    # Startup context rebuild (optional read)
     try:
         _ = notion_query(NOTION_MEMORY_DBID, {"page_size": 5})
     except Exception:
         pass
-    # Run summarizer on startup
     try:
         summarize_old_memory(days_old=90, batch=200)
     except Exception:
         pass
-    # Then run weekly
     while True:
         time.sleep(7 * 24 * 3600)
         try:
@@ -286,4 +279,5 @@ if __name__ == "__main__":
     # fire-and-forget scheduler thread
     t = threading.Thread(target=scheduler, daemon=True)
     t.start()
-    app.run(host=HOST, port=PORT)
+    # IMPORTANT: bind to 0.0.0.0 and Render's PORT
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
