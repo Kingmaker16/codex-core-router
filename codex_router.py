@@ -220,7 +220,10 @@ def openapi():
     spec = {
       "openapi": "3.0.3",
       "info": {"title": "Codex Core Router API", "version": "1.0.0"},
-      "servers": [{"url": "https://codex-core-router.onrender.com/"}],
+      "servers": [
+  {"url": "https://codex-core-router.onrender.com"},
+  {"url": "https://codex-core-router.onrender.com/"}
+],
       "paths": {
         "/memory/log": {
           "post": {
