@@ -14,7 +14,7 @@ load_dotenv(".env")
 
 # ===== Config =====
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL   = os.getenv("OPENAI_MODEL", "gpt-4o-mini-2024-07-18")
 SYSTEM_PROMPT  = os.getenv(
     "CODEX_SYSTEM_PROMPT",
     "You are Codex Core, Amar’s hands-off operator. "
@@ -81,7 +81,7 @@ def memory_properties(note:str, source:str="chat", tags:list=None):
         "Timestamp": {"date": {"start": datetime.utcnow().isoformat()}},
     }
     if tags:
-        props["Tags"] = {"multi_select": [{"name": t} for t in tags[:8]]}
+        props["Tags"] = {"multi_select": [{"name": t} for t in tags[:24]]}
     return props
 
 # ===== Flask =====
@@ -195,6 +195,102 @@ def memory_recent():
     res = notion_query(NOTION_MEMORY_DBID, body)
     return jsonify(res)
 
+# ===== Conversation logger (user/assistant -> Memory) =====
+@app.route("/log/conversation", methods=["POST"])
+def log_conversation():
+    """
+    Body: { "role": "user" | "assistant", "content": "text", "tags": ["..."] }
+    Logs both prompts and replies to Codex Memory.
+    """
+    if not NOTION_MEMORY_DBID:
+        return jsonify({"ok": False, "error": "NOTION_MEMORY_DBID not set"}), 400
+    data = request.get_json(force=True) or {}
+    role = (data.get("role") or "").strip().lower()
+    content = (data.get("content") or "").strip()
+    tags = data.get("tags") or []
+    if role not in ("user","assistant") or not content:
+        return jsonify({"ok": False, "error": "invalid role or empty content"}), 400
+    source = "chat-user" if role=="user" else "chat-assistant"
+    res = notion_create_row(NOTION_MEMORY_DBID, memory_properties(content, source, tags))
+    return jsonify({"ok": res.get("ok", False), "notion": res})
+
+# ===== OpenAPI schema for Private GPT Actions =====
+@app.route("/openapi.json", methods=["GET"])
+def openapi():
+    spec = {
+      "openapi": "3.0.3",
+      "info": {"title": "Codex Core Router API", "version": "1.0.0"},
+      "servers": [{"url": "https://codex-core-router.onrender.com"}],
+      "paths": {
+        "/memory/log": {
+          "post": {
+            "summary": "Log a memory note",
+            "requestBody": {
+              "required": True,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "note": {"type": "string"},
+                      "source": {"type": "string"},
+                      "tags": {"type": "array", "items": {"type": "string"}}
+                    },
+                    "required": ["note"]
+                  }
+                }
+              }
+            },
+            "responses": {"200": {"description": "OK"}}
+          }
+        },
+        "/chatlog": {
+          "post": {
+            "summary": "Queue a command",
+            "requestBody": {
+              "required": True,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "command": {"type": "string"},
+                      "status": {"type": "string"}
+                    },
+                    "required": ["command"]
+                  }
+                }
+              }
+            },
+            "responses": {"200": {"description": "OK"}}
+          }
+        },
+        "/log/conversation": {
+          "post": {
+            "summary": "Log conversation turns (user/assistant) to Memory",
+            "requestBody": {
+              "required": True,
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "role": {"type": "string", "enum": ["user","assistant"]},
+                      "content": {"type": "string"},
+                      "tags": {"type": "array", "items": {"type": "string"}}
+                    },
+                    "required": ["role","content"]
+                  }
+                }
+              }
+            },
+            "responses": {"200": {"description": "OK"}}
+          }
+        }
+      }
+    }
+    return jsonify(spec)
+
 # ===== Summarizer: compress old memory into 'archive-summary' blocks =====
 def summarize_old_memory(days_old:int=90, batch:int=200):
     if not (OPENAI_API_KEY and OPENAI_AVAILABLE and NOTION_MEMORY_DBID):
@@ -215,7 +311,6 @@ def summarize_old_memory(days_old:int=90, batch:int=200):
     if not results:
         return {"ok": True, "message": "nothing to summarize"}
 
-    # Build plaintext
     entries = []
     for p in results:
         props = p.get("properties", {})
@@ -243,7 +338,6 @@ def summarize_old_memory(days_old:int=90, batch:int=200):
     props = memory_properties(summary, source="system", tags=["archive-summary"])
     return notion_create_row(NOTION_MEMORY_DBID, props)
 
-# Run summarizer at startup + weekly
 def scheduler():
     try:
         _ = notion_query(NOTION_MEMORY_DBID, {"page_size": 5})
@@ -276,8 +370,7 @@ def health():
     })
 
 if __name__ == "__main__":
-    # fire-and-forget scheduler thread
     t = threading.Thread(target=scheduler, daemon=True)
     t.start()
-    # IMPORTANT: bind to 0.0.0.0 and Render's PORT
+    # For local runs; Render uses gunicorn start command
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
