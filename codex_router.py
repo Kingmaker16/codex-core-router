@@ -219,8 +219,11 @@ def log_conversation():
 def openapi():
     spec = {
       "openapi": "3.0.3",
-      "info": {"title": "Codex Core Router API", "version": "1.0.0"},
-      "paths": {
+"info": {"title": "Codex Core Router API", "version": "1.0.0"},
+"servers": [
+  {"url": "https://codex-core-router.onrender.com/", "description": "Primary"}
+],
+"paths": {
         "/memory/log": {
           "post": {
             "summary": "Log a memory note",
