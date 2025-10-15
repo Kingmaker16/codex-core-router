@@ -224,73 +224,75 @@ def openapi():
   { "url": "https://codex-core-router.onrender.com", "description": "Production server" }
 ],
 "paths": {
-        "/memory/log": {
-          "post": {
-            "summary": "Log a memory note",
-            "requestBody": {
-              "required": True,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "note": {"type": "string"},
-                      "source": {"type": "string"},
-                      "tags": {"type": "array", "items": {"type": "string"}}
-                    },
-                    "required": ["note"]
-                  }
-                }
-              }
-            },
-            "responses": {"200": {"description": "OK"}}
-          }
-        },
-        "/chatlog": {
-          "post": {
-            "summary": "Queue a command",
-            "requestBody": {
-              "required": True,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "command": {"type": "string"},
-                      "status": {"type": "string"}
-                    },
-                    "required": ["command"]
-                  }
-                }
-              }
-            },
-            "responses": {"200": {"description": "OK"}}
-          }
-        },
-        "/log/conversation": {
-          "post": {
-            "summary": "Log conversation turns (user/assistant) to Memory",
-            "requestBody": {
-              "required": True,
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "role": {"type": "string", "enum": ["user","assistant"]},
-                      "content": {"type": "string"},
-                      "tags": {"type": "array", "items": {"type": "string"}}
-                    },
-                    "required": ["role","content"]
-                  }
-                }
-              }
-            },
-            "responses": {"200": {"description": "OK"}}
+  "/memory/log": {
+    "post": {
+      "operationId": "logMemoryNote",
+      "summary": "Log a memory note",
+      "requestBody": {
+        "required": True,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "note": {"type": "string"},
+                "source": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["note"]
+            }
           }
         }
-      }
+      },
+      "responses": {"200": {"description": "OK"}}
     }
+  },
+  "/chatlog": {
+    "post": {
+      "operationId": "queueCommand",
+      "summary": "Queue a command",
+      "requestBody": {
+        "required": True,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "command": {"type": "string"},
+                "status": {"type": "string"}
+              },
+              "required": ["command"]
+            }
+          }
+        }
+      },
+      "responses": {"200": {"description": "OK"}}
+    }
+  },
+  "/log/conversation": {
+    "post": {
+      "operationId": "logConversationTurn",
+      "summary": "Log conversation turns (user/assistant) to Memory",
+      "requestBody": {
+        "required": True,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "role": {"type": "string", "enum": ["user","assistant"]},
+                "content": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}}
+              },
+              "required": ["role","content"]
+            }
+          }
+        }
+      },
+      "responses": {"200": {"description": "OK"}}
+    }
+  }
+}
     return jsonify(spec)
 
 # ===== Summarizer: compress old memory into 'archive-summary' blocks =====
