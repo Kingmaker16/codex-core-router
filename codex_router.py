@@ -221,7 +221,10 @@ def openapi():
       "openapi": "3.0.3",
 "info": {"title": "Codex Core Router API", "version": "1.0.0"},
 "servers": [
-  {"url": "https://codex-core-router.onrender.com/", "description": "Primary"}
+  {
+    "url": "https://codex-core-router.onrender.com",
+    "description": "Primary server (no trailing slash)"
+  }
 ],
 "paths": {
         "/memory/log": {
