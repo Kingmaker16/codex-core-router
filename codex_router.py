@@ -213,6 +213,12 @@ def log_conversation():
     source = "chat-user" if role=="user" else "chat-assistant"
     res = notion_create_row(NOTION_MEMORY_DBID, memory_properties(content, source, tags))
     return jsonify({"ok": res.get("ok", False), "notion": res})
+from flask import send_from_directory
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+
+@app.route("/static/openapi.json", methods=["GET"])
+def static_openapi():
+    return send_from_directory(APP_DIR, "openapi.json", mimetype="application/json")
 # ===== OpenAPI schema for Private GPT Actions =====
 @app.route("/openapi.json", methods=["GET"])
 def openapi():
