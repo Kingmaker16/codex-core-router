@@ -213,21 +213,26 @@ def log_conversation():
     source = "chat-user" if role=="user" else "chat-assistant"
     res = notion_create_row(NOTION_MEMORY_DBID, memory_properties(content, source, tags))
     return jsonify({"ok": res.get("ok", False), "notion": res})
-
 # ===== OpenAPI schema for Private GPT Actions =====
 @app.route("/openapi.json", methods=["GET"])
 def openapi():
     spec = {
         "openapi": "3.1.0",
-        "info": { "title": "Codex Core Router API", "version": "1.0.0" },
+        "info": {
+            "title": "Codex Core Router API",
+            "version": "1.0.0"
+        },
         "servers": [
-            { "url": "https://codex-core-router.onrender.com", "description": "Production server" }
+            {
+                "url": "https://codex-core-router.onrender.com",
+                "description": "Production server"
+            }
         ],
         "paths": {
             "/memory/log": {
                 "post": {
                     "operationId": "logMemoryNote",
-                    "summary": "Log a memory note",
+                    "summary": "Log a memory note to Codex shared memory",
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -235,22 +240,27 @@ def openapi():
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "note": { "type": "string" },
-                                        "source": { "type": "string" },
-                                        "tags": { "type": "array", "items": { "type": "string" } }
+                                        "note": {"type": "string"},
+                                        "source": {"type": "string"},
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        }
                                     },
                                     "required": ["note"]
                                 }
                             }
                         }
                     },
-                    "responses": { "200": { "description": "OK" } }
+                    "responses": {
+                        "200": {"description": "OK"}
+                    }
                 }
             },
             "/chatlog": {
                 "post": {
                     "operationId": "queueCommand",
-                    "summary": "Queue a command",
+                    "summary": "Queue a command in the Codex Command Queue",
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -258,21 +268,23 @@ def openapi():
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "command": { "type": "string" },
-                                        "status": { "type": "string" }
+                                        "command": {"type": "string"},
+                                        "status": {"type": "string"}
                                     },
                                     "required": ["command"]
                                 }
                             }
                         }
                     },
-                    "responses": { "200": { "description": "OK" } }
+                    "responses": {
+                        "200": {"description": "OK"}
+                    }
                 }
             },
             "/log/conversation": {
                 "post": {
                     "operationId": "logConversationTurn",
-                    "summary": "Log conversation turns (user/assistant) to Memory",
+                    "summary": "Log conversation turns (user or assistant) to memory",
                     "requestBody": {
                         "required": True,
                         "content": {
@@ -280,16 +292,24 @@ def openapi():
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "role": { "type": "string", "enum": ["user", "assistant"] },
-                                        "content": { "type": "string" },
-                                        "tags": { "type": "array", "items": { "type": "string" } }
+                                        "role": {
+                                            "type": "string",
+                                            "enum": ["user", "assistant"]
+                                        },
+                                        "content": {"type": "string"},
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {"type": "string"}
+                                        }
                                     },
                                     "required": ["role", "content"]
                                 }
                             }
                         }
                     },
-                    "responses": { "200": { "description": "OK" } }
+                    "responses": {
+                        "200": {"description": "OK"}
+                    }
                 }
             }
         }
