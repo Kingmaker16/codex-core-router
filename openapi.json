@@ -1,0 +1,36 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Codex Core Router",
+    "version": "14",
+    "description": "Your API description here."
+  },
+  "servers": [
+    {
+      "url": "https://codex-core-router.onrender.com"
+    }
+  ],
+  "paths": {
+    "/example": {
+      "get": {
+        "operationId": "getExample",
+        "summary": "Example GET endpoint",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
