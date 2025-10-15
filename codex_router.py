@@ -218,9 +218,11 @@ def log_conversation():
 @app.route("/openapi.json", methods=["GET"])
 def openapi():
     spec = {
-      "openapi": "3.0.3",
+      "openapi": "3.1.0",
 "info": {"title": "Codex Core Router API", "version": "1.0.0"},
-"servers": ["https://codex-core-router.onrender.com"],
+"servers": [
+  { "url": "https://codex-core-router.onrender.com", "description": "Production server" }
+],
 "paths": {
         "/memory/log": {
           "post": {
