@@ -293,6 +293,7 @@ def openapi():
     }
   }
 }
+    }
     return jsonify(spec)
 
 # ===== Summarizer: compress old memory into 'archive-summary' blocks =====
