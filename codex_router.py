@@ -371,17 +371,22 @@ def summarize_old_memory(days_old:int=90, batch:int=200):
 
 def scheduler():
     try:
-        _ = notion_query(NOTION_MEMORY_DBID, {"page_size": 5})
+        # Warm-up quick health & memory check on boot
+        _ = notion_query(NOTION_MEMORY_DBID, {"page_size": 3})
     except Exception:
         pass
+
+    # Run a reflection shortly after startup (once)
     try:
-        summarize_old_memory(days_old=90, batch=200)
+        reflect_and_generate_rules(limit=50)
     except Exception:
         pass
+
+    # Nightly loop (every 24h)
     while True:
-        time.sleep(7 * 24 * 3600)
+        time.sleep(24 * 3600)
         try:
-            summarize_old_memory(days_old=90, batch=200)
+            reflect_and_generate_rules(limit=100)
         except Exception:
             pass
 
