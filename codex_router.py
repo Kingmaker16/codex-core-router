@@ -457,6 +457,26 @@ def reflect_run():
     data = request.get_json(force=True) or {}
     limit = int(data.get("limit", 50))
     return jsonify(reflect_and_generate_rules(limit))
+# ===== Archive: log full transcripts =====
+@app.route("/archive/log", methods=["POST"])
+def archive_log():
+    if not os.getenv("NOTION_ARCHIVE_DBID"):
+        return jsonify({"ok": False, "error": "NOTION_ARCHIVE_DBID not set"}), 400
+    data = request.get_json(force=True) or {}
+    transcript = (data.get("transcript") or "").strip()
+    source = (data.get("source") or "bridge").strip()
+    tags = data.get("tags") or ["conversation"]
+    if not transcript:
+        return jsonify({"ok": False, "error": "empty transcript"}), 400
+
+    props = {
+        "Transcript": {"title": [{"text": {"content": transcript[:2000]}}]},
+        "Source": {"select": {"name": source}},
+        "Timestamp": {"date": {"start": datetime.utcnow().isoformat()}},
+        "Tags": {"multi_select": [{"name": t} for t in tags[:8]]}
+    }
+    res = notion_create_row(os.getenv("NOTION_ARCHIVE_DBID"), props)
+    return jsonify({"ok": res.get("ok", False), "notion": res})
 if __name__ == "__main__":
     t = threading.Thread(target=scheduler, daemon=True)
     t.start()
