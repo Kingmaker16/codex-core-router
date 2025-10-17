@@ -212,6 +212,15 @@ def log_conversation():
         return jsonify({"ok": False, "error": "invalid role or empty content"}), 400
     source = "chat-user" if role=="user" else "chat-assistant"
     res = notion_create_row(NOTION_MEMORY_DBID, memory_properties(content, source, tags))
+    # Also write verbatim to Archive (continuous transcript)
+    if os.getenv("NOTION_ARCHIVE_DBID"):
+        arch_props = {
+            "Transcript": {"title": [{"text": {"content": content[:2000]}}]},
+            "Source": {"select": {"name": "bridge" if source.startswith("chat-") else source}},
+            "Timestamp": {"date": {"start": datetime.utcnow().isoformat()}},
+            "Tags": {"multi_select": [{"name": t} for t in (tags[:8] if tags else ["conversation"])]}
+        }
+        notion_create_row(os.getenv("NOTION_ARCHIVE_DBID"), arch_props)
     return jsonify({"ok": res.get("ok", False), "notion": res})
 from flask import send_from_directory
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
